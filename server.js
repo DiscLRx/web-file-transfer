@@ -2,25 +2,32 @@ const http = require('http')
 const fs = require('fs');
 const url = require('url')
 const yaml = require('js-yaml');
+const multiparty = require('multiparty');
+const {trim} = require("./utils");
 
 let configFileContent = null
-if (fs.existsSync('./config.yaml')){
+if (fs.existsSync('./config.yaml')) {
     configFileContent = fs.readFileSync('./config.yaml')
 } else if (fs.existsSync('./config.yml')) {
     configFileContent = fs.readFileSync('./config.yml')
 }
 
 let config = null
-if (configFileContent !== null){
+if (configFileContent !== null) {
     config = yaml.load(configFileContent)
 }
 
 const hostname = config?.hostname ?? '0.0.0.0'
 const port = config?.port ?? 80
 const filesRoot = config?.root ?? './files'
+const tmpDir = './tmp'
 
 if (!fs.existsSync(filesRoot)) {
     fs.mkdirSync(filesRoot)
+}
+
+if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir)
 }
 
 class File {
@@ -85,12 +92,27 @@ const server = http.createServer((req, res) => {
         }
     }
 
-    const regUpload = /^\/api\/upload?.*$/
-    if (req.url.match(regUpload)) {
+    if (req.url === '/api/upload') {
         try {
-            let filename = url.parse(req.url, true).query.filename
-            req.pipe(fs.createWriteStream(`${filesRoot}/${filename}`))
-            res.end();
+            let form = new multiparty.Form({
+                uploadDir: tmpDir
+            })
+            form.parse(req, (err, fields, files) => {
+                if (files !== undefined && files.file[0] !== undefined) {
+                    let tmpPath = files.file[0].path
+                    let filename = files.file[0].originalFilename
+                    if (trim(filename) === '') {
+                        fs.unlinkSync(tmpPath)
+                    } else {
+                        fs.renameSync(tmpPath, `${filesRoot}/${filename}`)
+                    }
+                }
+                res.writeHead(302, {
+                    'Location': '/'
+                })
+                res.end();
+            })
+            return;
         } catch (ex) {
             console.log(ex)
         }
@@ -101,12 +123,16 @@ const server = http.createServer((req, res) => {
         try {
             let filename = url.parse(req.url, true).query.filename
             let path = `${filesRoot}/${filename}`
+            let {size} = fs.statSync(path)
             if (fs.existsSync(path)) {
+                req.setTimeout(1000000000)
                 res.writeHead(200, {
                     'Content-Type': 'application/octet-stream',
-                    'Content-Disposition': `attachment; filename=${encodeURI(filename)}`
+                    'Content-Disposition': `attachment; filename*=UTF-8''${encodeURI(filename)};`,
+                    'Content-Length': `${size}`
                 })
                 let rs = fs.createReadStream(path)
+
                 rs.pipe(res)
                 return
             }
