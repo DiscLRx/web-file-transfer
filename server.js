@@ -188,14 +188,16 @@ function uploadFile (req, res) {
             uploadDir: tmpDir
         })
         form.parse(req, (err, fields, files) => {
-            if (files !== undefined && files.file[0] !== undefined) {
-                let tmpPath = files.file[0].path
-                let filename = files.file[0].originalFilename
-                if (trim(filename) === '') {
-                    fs.unlinkSync(tmpPath)
-                } else {
-                    fs.renameSync(tmpPath, `${filesRoot}/${filename}`)
-                }
+            if (files !== undefined) {
+                files.file.forEach(file => {
+                    let tmpPath = file.path
+                    let filename = file.originalFilename
+                    if (trim(filename) === '') {
+                        fs.unlinkSync(tmpPath)
+                    } else {
+                        fs.renameSync(tmpPath, `${filesRoot}/${filename}`)
+                    }
+                })
             }
             res.writeHead(302, {
                 'Location': '/'
