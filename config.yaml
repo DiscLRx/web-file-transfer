@@ -4,3 +4,6 @@ port: 80
 
 # 用户文件存放的目录
 root: ./files
+
+# 访问密钥
+access-key: example-key

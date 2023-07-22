@@ -1,0 +1,35 @@
+body {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+form > input, button {
+    border-radius: 5px;
+    margin: 10px;
+    border: none;
+    height: 2rem;
+    font-size: 1.1rem;
+}
+
+form > input {
+    color: rgba(255,255,255,1);
+    background-color: rgba(255,255,255,0.3);
+}
+
+form > button {
+    color: rgba(255,255,255,1);
+    background-color: rgba(0,110,255,1);
+    width: 6rem;
+    cursor: pointer;
+}
+
+label {
+    color: rgba(255,255,255,1);
+}

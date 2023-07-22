@@ -1,6 +1,6 @@
 {
   "name": "webfiletransfer",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body": "^5.1.0",
     "js-yaml": "^4.1.0",
     "multiparty": "^4.2.3"
   }
