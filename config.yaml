@@ -1,9 +1,13 @@
 # 监听的主机名和端口
 hostname: 0.0.0.0
-port: 80
+port: 443
 
 # 用户文件存放的目录
 root: ./files
 
 # 访问密钥
 access-key: example-key
+
+# ssl证书和密钥
+ssl-cert: ./cert/ssl-cert.pem
+ssl-key: ./cert/ssl-key.key

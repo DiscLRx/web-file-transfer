@@ -3,3 +3,4 @@ node_modules
 daemon
 files
 tmp
+cert

@@ -1,4 +1,5 @@
 const http = require('http')
+const https = require('https')
 const fs = require('fs');
 const url = require('url')
 const yaml = require('js-yaml');
@@ -19,6 +20,8 @@ const hostname = config?.hostname ?? '0.0.0.0'
 const port = config?.port ?? 80
 const filesRoot = config?.root ?? './files'
 const accessKey = config?.['access-key'] ?? null
+const sslCert = config?.['ssl-cert'] ?? null
+const sslKey = config?.['ssl-key'] ?? null
 
 const tmpDir = './tmp'
 
@@ -239,10 +242,24 @@ function deleteFile (req, res) {
     }
 }
 
-const server = http.createServer((req, res) => {
+let server
+if (sslCert !== null && sslKey !== null) {
+    server = https.createServer({
+        cert: fs.readFileSync(sslCert),
+        key: fs.readFileSync(sslKey)
+    }, (req, res) => {
+        run(req, res)
+    })
+} else {
+    server = http.createServer((req, res) => {
+        run(req, res)
+    })
+}
+
+function run(req, res) {
     console.log(`[${getDateStr()}]  ${req.socket.remoteAddress}:${req.socket.remotePort}  ${req.method} ${req.url}`)
     route(req, res)
-})
+}
 
 server.listen(port, hostname, () => {
     console.log(`[${getDateStr()}]  Server is running on ${hostname}:${port}, files root directory is '${filesRoot}'`)
