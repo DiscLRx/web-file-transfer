@@ -5,32 +5,59 @@ const url = require('url')
 const yaml = require('js-yaml');
 const multiparty = require('multiparty');
 const jsonBody = require("body/json");
-const {trim, getDateStr, getFileContent} = require("./utils");
+const {trim, getDateStr, getFileContent, mergeObjects} = require("./utils");
 
-let configFileContent = null
+const config = {
+    server: {
+        'force-https': false,
+        http: {
+            enable: true,
+            hostname: '0.0.0.0',
+            port: 80
+        },
+        https: {
+            enable: false,
+            hostname: '0.0.0.0',
+            port: 443,
+            'ssl-cert': '',
+            'ssl-key': ''
+        }
+    },
+    'files-root': './files',
+    'access-key': 'example-key'
+}
+
+let userConfig = null
 if (fs.existsSync('./config.yaml')) {
-    configFileContent = fs.readFileSync('./config.yaml')
+    userConfig = yaml.load(fs.readFileSync('./config.yaml'))
 } else if (fs.existsSync('./config.yml')) {
-    configFileContent = fs.readFileSync('./config.yml')
+    userConfig = yaml.load(fs.readFileSync('./config.yml'))
+}
+mergeObjects(config, [userConfig], (value) => value)
+
+const FORCE_HTTPS = config.server['force-https']
+
+const HTTP_ENABLE = config.server.http.enable
+const HTTP_HOSTNAME = config.server.http.hostname
+const HTTP_PORT = config.server.http.port
+
+const HTTPS_ENABLE = config.server.https.enable
+const HTTPS_HOSTNAME = config.server.https.hostname
+const HTTPS_PORT = config.server.https.port
+const HTTPS_SSH_CERT = config.server.https['ssl-cert']
+const HTTPS_SSH_KEY = config.server.https['ssl-key']
+
+const FILES_ROOT = config['files-root']
+const ACCESS_KEY = config['access-key']
+
+const FILE_TMP_DIR = './tmp'
+
+if (!fs.existsSync(FILES_ROOT)) {
+    fs.mkdirSync(FILES_ROOT)
 }
 
-let config = configFileContent === null ? null : yaml.load(configFileContent)
-
-const hostname = config?.hostname ?? '0.0.0.0'
-const port = config?.port ?? 80
-const filesRoot = config?.root ?? './files'
-const accessKey = config?.['access-key'] ?? null
-const sslCert = config?.['ssl-cert'] ?? null
-const sslKey = config?.['ssl-key'] ?? null
-
-const tmpDir = './tmp'
-
-if (!fs.existsSync(filesRoot)) {
-    fs.mkdirSync(filesRoot)
-}
-
-if (!fs.existsSync(tmpDir)) {
-    fs.mkdirSync(tmpDir)
+if (!fs.existsSync(FILE_TMP_DIR)) {
+    fs.mkdirSync(FILE_TMP_DIR)
 }
 
 const routes = [
@@ -105,7 +132,7 @@ const auth = (req) => {
         return false
     }
 
-    return reqKey === accessKey;
+    return reqKey === ACCESS_KEY;
 }
 
 const route = (req, res) => {
@@ -127,7 +154,7 @@ const route = (req, res) => {
         return
     }
 
-    let authPass = route.auth && accessKey !== null ? auth(req) : true
+    let authPass = route.auth && ACCESS_KEY !== null ? auth(req) : true
     if (authPass) {
         route.handler(req, res)
     } else {
@@ -140,8 +167,8 @@ const route = (req, res) => {
 
 function login (req, res) {
     jsonBody(req, res, (err, body) => {
-        if (body.key === accessKey){
-            res.setHeader('Set-Cookie', [`key=${accessKey}; Path=/; httpOnly;`])
+        if (body.key === ACCESS_KEY){
+            res.setHeader('Set-Cookie', [`key=${ACCESS_KEY}; Path=/; httpOnly;`])
             res.end(JSON.stringify({
                 msg: 'OK'
             }))
@@ -177,8 +204,8 @@ function getFileList (req, res) {
             this.size = size;
         }
     }
-    let files = fs.readdirSync(filesRoot).map(filename => {
-        let {size} = fs.statSync(`${filesRoot}/${filename}`)
+    let files = fs.readdirSync(FILES_ROOT).map(filename => {
+        let {size} = fs.statSync(`${FILES_ROOT}/${filename}`)
         return new File(filename, size);
     })
     let filesJson = JSON.stringify(files)
@@ -188,7 +215,7 @@ function getFileList (req, res) {
 function uploadFile (req, res) {
     try {
         let form = new multiparty.Form({
-            uploadDir: tmpDir
+            uploadDir: FILE_TMP_DIR
         })
         form.parse(req, (err, fields, files) => {
             if (files !== undefined) {
@@ -198,7 +225,7 @@ function uploadFile (req, res) {
                     if (trim(filename) === '') {
                         fs.unlinkSync(tmpPath)
                     } else {
-                        fs.renameSync(tmpPath, `${filesRoot}/${filename}`)
+                        fs.renameSync(tmpPath, `${FILES_ROOT}/${filename}`)
                     }
                 })
             }
@@ -211,10 +238,11 @@ function uploadFile (req, res) {
         console.log(ex)
     }
 }
+
 function downloadFile (req, res) {
     try {
         let filename = url.parse(req.url, true).query.filename
-        let path = `${filesRoot}/${filename}`
+        let path = `${FILES_ROOT}/${filename}`
         let {size} = fs.statSync(path)
         if (fs.existsSync(path)) {
             res.writeHead(200, {
@@ -229,10 +257,11 @@ function downloadFile (req, res) {
         console.log(ex)
     }
 }
+
 function deleteFile (req, res) {
     try {
         let filename = url.parse(req.url, true).query.filename
-        let path = `${filesRoot}/${filename}`
+        let path = `${FILES_ROOT}/${filename}`
         if (fs.existsSync(path)) {
             fs.unlinkSync(path)
         }
@@ -242,25 +271,48 @@ function deleteFile (req, res) {
     }
 }
 
-let server
-if (sslCert !== null && sslKey !== null) {
-    server = https.createServer({
-        cert: fs.readFileSync(sslCert),
-        key: fs.readFileSync(sslKey)
-    }, (req, res) => {
-        run(req, res)
-    })
-} else {
-    server = http.createServer((req, res) => {
-        run(req, res)
-    })
+function logRequest(req) {
+    console.log(`[${getDateStr()}]  ${req.socket.remoteAddress}:${req.socket.remotePort} => ${req.socket.localAddress}:${req.socket.localPort}  ${req.method} ${req.url}`)
 }
 
-function run(req, res) {
-    console.log(`[${getDateStr()}]  ${req.socket.remoteAddress}:${req.socket.remotePort}  ${req.method} ${req.url}`)
-    route(req, res)
+if (HTTPS_ENABLE) {
+    https
+        .createServer({
+            cert: fs.readFileSync(HTTPS_SSH_CERT),
+            key: fs.readFileSync(HTTPS_SSH_KEY)
+        }, (req, res) => {
+            logRequest(req)
+            route(req, res)
+        })
+        .listen(HTTPS_PORT, HTTPS_HOSTNAME, () => {
+            console.log(`[${getDateStr()}]  Listening ${HTTPS_HOSTNAME}:${HTTPS_PORT}`)
+        })
 }
 
-server.listen(port, hostname, () => {
-    console.log(`[${getDateStr()}]  Server is running on ${hostname}:${port}, files root directory is '${filesRoot}'`)
-})
+if (FORCE_HTTPS && HTTPS_ENABLE) {
+    http
+        .createServer((req, res) => {
+            logRequest(req)
+            let hostname = req.headers['host'].split(':')[0]
+            res.writeHead(301, {
+                'Location': `https://${hostname}:${HTTPS_PORT}${req.url}`
+            })
+            res.end()
+        })
+        .listen(HTTP_PORT, HTTP_HOSTNAME, () => {
+            console.log(`[${getDateStr()}]  Listening ${HTTP_HOSTNAME}:${HTTP_PORT} \nForce Https`)
+        })
+} else if (HTTP_ENABLE) {
+    http
+        .createServer((req, res) => {
+            logRequest(req)
+            route(req, res)
+        })
+        .listen(HTTP_PORT, HTTP_HOSTNAME, () => {
+            console.log(`[${getDateStr()}]  Listening ${HTTP_HOSTNAME}:${HTTP_PORT}`)
+        })
+}
+
+
+
+

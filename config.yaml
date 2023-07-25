@@ -1,13 +1,23 @@
-# 监听的主机名和端口
-hostname: 0.0.0.0
-port: 443
+server:
+   # 强制将http请求重定向为https，当未启用https此配置不生效
+   # 启用此项时将强制启用http配置，若未配置http将使用默认配置
+  force-https: false
+
+  http:
+    enable: true
+    hostname: 0.0.0.0
+    port: 80
+
+  https:
+    enable: false
+    hostname: 0.0.0.0
+    port: 443
+    # ssl证书和密钥
+    ssl-cert: ./cert/ssl-cert.pem
+    ssl-key: ./cert/ssl-key.key
 
 # 用户文件存放的目录
-root: ./files
+files-root: ./files
 
 # 访问密钥
 access-key: example-key
-
-# ssl证书和密钥
-ssl-cert: ./cert/ssl-cert.pem
-ssl-key: ./cert/ssl-key.key

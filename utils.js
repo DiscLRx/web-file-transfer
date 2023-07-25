@@ -37,8 +37,36 @@ const getFileContent = (path) => {
     }
 }
 
+const mergeObjects = (target, sources, filter = () => true) => {
+    const merge = (target, source) => {
+        let props = Object.getOwnPropertyNames(source)
+        props.forEach(prop => {
+            let value = source[prop]
+            if (!filter(value)) {
+                return
+            }
+            if (value instanceof Object
+                && !(value instanceof Array)
+                && !(value instanceof Function)
+                && target[prop] !== null
+                && target[prop] !== undefined) {
+                merge(target[prop], value)
+            } else {
+                target[prop] = value
+            }
+        })
+    }
+    sources.forEach(source => {
+        if (source instanceof Object) {
+            merge(target, source)
+        }
+    })
+    return target
+}
+
 module.exports = {
     trim,
     getDateStr,
-    getFileContent
+    getFileContent,
+    mergeObjects
 }
