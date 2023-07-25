@@ -18,6 +18,9 @@ axios({
 })
 
 function renderSize(value) {
+    if (value === 0) {
+        return '0 Bytes'
+    }
     let unitArr = ["Bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
     let index
     let srcsize = parseFloat(value)
