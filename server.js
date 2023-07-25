@@ -33,7 +33,8 @@ if (fs.existsSync('./config.yaml')) {
 } else if (fs.existsSync('./config.yml')) {
     userConfig = yaml.load(fs.readFileSync('./config.yml'))
 }
-mergeObjects(config, [userConfig], (value) => value)
+
+mergeObjects(config, [userConfig], (value) => value !== null && value !== '')
 
 const FORCE_HTTPS = config.server['force-https']
 
