@@ -5,12 +5,12 @@ body {
     align-items: center;
 }
 
-form {
+div {
     display: flex;
     flex-direction: column;
 }
 
-form > input, button {
+div > input, button {
     border-radius: 5px;
     margin: 10px;
     border: none;
@@ -18,12 +18,12 @@ form > input, button {
     font-size: 1.1rem;
 }
 
-form > input {
+div > input {
     color: rgba(255,255,255,1);
     background-color: rgba(255,255,255,0.3);
 }
 
-form > button {
+div > button {
     color: rgba(255,255,255,1);
     background-color: rgba(0,110,255,1);
     width: 6rem;

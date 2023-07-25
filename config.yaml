@@ -4,14 +4,14 @@ server:
   force-https: false
 
   http:
-    enable: true
+    enable: false
     hostname: 0.0.0.0
     port: 80
 
   https:
-    enable: false
+    enable: true
     hostname: 0.0.0.0
-    port: 443
+    port: 2887
     # ssl证书和密钥
     ssl-cert: ./cert/ssl-cert.pem
     ssl-key: ./cert/ssl-key.key

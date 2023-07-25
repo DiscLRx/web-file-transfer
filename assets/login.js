@@ -17,3 +17,9 @@ function login(){
     })
 
 }
+
+document.querySelector('#key').addEventListener('keydown', (e) => {
+    if (e.keyCode === 13) {
+        login()
+    }
+})
