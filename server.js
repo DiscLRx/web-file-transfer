@@ -133,7 +133,7 @@ const auth = (req) => {
         return false
     }
 
-    return reqKey === ACCESS_KEY;
+    return reqKey == ACCESS_KEY;
 }
 
 const route = (req, res) => {
@@ -168,7 +168,7 @@ const route = (req, res) => {
 
 function login (req, res) {
     jsonBody(req, res, (err, body) => {
-        if (body.key === ACCESS_KEY){
+        if (body.key == ACCESS_KEY){
             res.setHeader('Set-Cookie', [`key=${ACCESS_KEY}; Path=/; httpOnly;`])
             res.end(JSON.stringify({
                 msg: 'OK'
