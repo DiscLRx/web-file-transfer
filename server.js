@@ -6,6 +6,8 @@ const yaml = require('js-yaml');
 const multiparty = require('multiparty');
 const jsonBody = require("body/json");
 const {trim, getDateStr, getFileContent, mergeObjects} = require("./utils");
+const {DirTree} = require("./dir-tree");
+const path = require("path");
 
 const config = {
     server: {
@@ -49,7 +51,7 @@ const HTTPS_SSH_CERT = config.server.https['ssl-cert']
 const HTTPS_SSH_KEY = config.server.https['ssl-key']
 
 const FILES_ROOT = config['files-root']
-const ACCESS_KEY = config['access-key']
+const ACCESS_KEY = config['access-key'].toString()
 
 const FILE_TMP_DIR = './tmp'
 
@@ -93,6 +95,12 @@ const routes = [
         handler: getFileList
     },
     {
+        path: '/api/create-directory',
+        method: 'POST',
+        auth: true,
+        handler: createDirectory
+    },
+    {
         path: '/api/upload',
         method: 'POST',
         auth: true,
@@ -133,7 +141,7 @@ const auth = (req) => {
         return false
     }
 
-    return reqKey == ACCESS_KEY;
+    return reqKey.toString() === ACCESS_KEY;
 }
 
 const route = (req, res) => {
@@ -168,7 +176,7 @@ const route = (req, res) => {
 
 function login (req, res) {
     jsonBody(req, res, (err, body) => {
-        if (body.key == ACCESS_KEY){
+        if (body.key.toString() === ACCESS_KEY){
             res.setHeader('Set-Cookie', [`key=${ACCESS_KEY}; Path=/; httpOnly;`])
             res.end(JSON.stringify({
                 msg: 'OK'
@@ -199,17 +207,8 @@ function assets (req, res) {
 }
 
 function getFileList (req, res) {
-    class File {
-        constructor(name, size) {
-            this.name = name;
-            this.size = size;
-        }
-    }
-    let files = fs.readdirSync(FILES_ROOT).map(filename => {
-        let {size} = fs.statSync(`${FILES_ROOT}/${filename}`)
-        return new File(filename, size);
-    })
-    let filesJson = JSON.stringify(files)
+    const dirTree = new DirTree("files").getDirTree(".")
+    let filesJson = JSON.stringify(dirTree.items)
     res.end(filesJson)
 }
 
@@ -219,6 +218,7 @@ function uploadFile (req, res) {
             uploadDir: FILE_TMP_DIR
         })
         form.parse(req, (err, fields, files) => {
+            const baseDir = fields.baseDir[0]
             if (files !== undefined) {
                 files.file.forEach(file => {
                     let tmpPath = file.path
@@ -226,7 +226,7 @@ function uploadFile (req, res) {
                     if (trim(filename) === '') {
                         fs.unlinkSync(tmpPath)
                     } else {
-                        fs.renameSync(tmpPath, `${FILES_ROOT}/${filename}`)
+                        fs.renameSync(tmpPath, path.join(FILES_ROOT, baseDir, filename))
                     }
                 })
             }
@@ -242,16 +242,15 @@ function uploadFile (req, res) {
 
 function downloadFile (req, res) {
     try {
-        let filename = url.parse(req.url, true).query.filename
-        let path = `${FILES_ROOT}/${filename}`
-        let {size} = fs.statSync(path)
-        if (fs.existsSync(path)) {
+        let file = url.parse(req.url, true).query.file
+        let filePath = path.join(FILES_ROOT, file)
+        let {size} = fs.statSync(filePath)
+        if (fs.existsSync(filePath)) {
             res.writeHead(200, {
                 'Content-Type': 'application/octet-stream',
-                'Content-Disposition': `attachment; filename*=UTF-8''${encodeURI(filename)};`,
                 'Content-Length': `${size}`
             })
-            let rs = fs.createReadStream(path)
+            let rs = fs.createReadStream(filePath)
             rs.pipe(res)
         }
     } catch (ex) {
@@ -261,15 +260,26 @@ function downloadFile (req, res) {
 
 function deleteFile (req, res) {
     try {
-        let filename = url.parse(req.url, true).query.filename
-        let path = `${FILES_ROOT}/${filename}`
-        if (fs.existsSync(path)) {
-            fs.unlinkSync(path)
-        }
+        let queryPath = url.parse(req.url, true).query.path
+        let filePath = path.join(FILES_ROOT, queryPath)
+        fs.rmSync(filePath, {
+            force: true,
+            recursive: true
+        })
         res.end()
     } catch (ex) {
         console.log(ex)
     }
+}
+
+function createDirectory(req, res) {
+    jsonBody(req, res, (err, body) => {
+        const dirPath = path.join(FILES_ROOT, body.path)
+        fs.mkdirSync(dirPath, {
+            recursive: true
+        })
+        res.end()
+    })
 }
 
 function logRequest(req) {

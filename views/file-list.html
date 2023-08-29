@@ -1,24 +1,47 @@
 <html lang="zh-cn">
-    <head>
-        <meta charset="utf-8"/>
-        <title>Web File Transfer</title>
-        <script src="assets/axios.min.js"></script>
-        <link rel="stylesheet" href="assets/common.css">
-        <link rel="stylesheet" href="assets/file-list.css">
-        <link rel="shortcut icon" href="assets/favicon.ico">
-    </head>
-    <body>
-        <form action="/api/upload" enctype="multipart/form-data" method="post">
-            <input type="file" name="file" multiple="multiple"/>
-            <button type="submit">上传</button>
-        </form>
-        <table id="flist">
-            <tr class="meta-line">
-                <td>NAME</td>
-                <td>SIZE</td>
-                <td colspan="2">OPS</td>
-            </tr>
-        </table>
-        <script src="assets/file-list.js"></script>
-    </body>
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web File Transfer</title>
+    <script src="assets/axios.min.js"></script>
+    <link rel="stylesheet" href="assets/common.css">
+    <link rel="stylesheet" href="assets/file-list.css">
+    <link rel="shortcut icon" href="assets/favicon.ico">
+</head>
+<body>
+<form action="/api/upload" enctype="multipart/form-data" method="post" id="uploadForm">
+    <input type="text" name="baseDir" id="baseDir" hidden="hidden">
+    <input type="file" name="file" multiple="multiple"/>
+    <button type="submit" id="uploadBtn">上传</button>
+</form>
+<table>
+    <thead>
+    <tr>
+        <td colspan="3" >
+            <div class="dir-nav">
+                <button id="dir-nav-back" onclick="lastDirView()">&lt;&lt;&nbsp;Back</button>
+                <button id="dir-nav-createdir" type="button" onclick="showCreateDirDialog()">新建文件夹</button>
+                <dialog id="createDirDialog">
+                    <div  id="createDirPanel">
+                        <input type="text" id="createDirInput">
+                        <span id="createDirFailed" style="visibility: hidden">Failed to create directory</span>
+                        <div>
+                            <button onclick="createDir()">确认</button>
+                            <button onclick="closeCreateDirDialog()">取消</button>
+                        </div>
+                    </div>
+                </dialog>
+            </div>
+        </td>
+    </tr>
+    <tr class="meta-line">
+        <td>NAME</td>
+        <td>SIZE</td>
+        <td class="ops-td">OPS</td>
+    </tr>
+    </thead>
+    <tbody  id="flist"></tbody>
+</table>
+<script src="assets/file-list.js"></script>
+</body>
 </html>

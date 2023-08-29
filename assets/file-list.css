@@ -1,11 +1,82 @@
+* {
+    font-size: 1rem;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;
     color: rgba(255, 255, 255, 1);
 }
 
+.name-td, .del-td, #dir-nav-back, #dir-nav-createdir {
+    cursor: pointer;
+    transition-duration: 200ms;
+}
+
+.dir-nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#dir-nav-back {
+    background: none;
+    border: none;
+    color: rgba(0, 180, 230, 1);
+    cursor: pointer;
+}
+
+#dir-nav-back:hover {
+    color: rgba(0, 200, 255, 1);
+}
+
+#dir-nav-createdir {
+    padding: 6px;
+    font-size: 1rem;
+    color: #fff;
+    border-radius: .25rem;
+    border: 1px solid #2a80eb;
+    background-color: #2a80eb;
+}
+
+#createDirDialog {
+    background-color: rgba(50,50,50,0.97);
+    border: rgba(200,200,200,0.6) 1px solid;
+    border-radius: .25rem;
+}
+
+#createDirPanel {
+    height: 4.5rem;
+    background-color: rgba(0,0,0,0);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+#createDirPanel > input {
+    border: none;
+    background-color: rgba(230,230,230,1);
+    height: 1.6rem;
+}
+
+#createDirPanel > div {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+#createDirPanel > div > button {
+    width: 75px;
+    padding: 3px;
+    font-size: 1.1rem;
+    color: #fff;
+    border-radius: .25rem;
+    border: 1px solid #2a80eb;
+    background-color: #2a80eb;
+}
+
 .meta-line > td {
-    color: rgba(200,200,200,1);
+    color: rgba(200, 200, 200, 1);
 }
 
 td {
@@ -13,19 +84,25 @@ td {
     padding: 4px;
 }
 
-td > * {
-    font-size: 1rem;
+.name-td:hover {
+    color: rgba(255, 200, 0, 1);
 }
 
-td > a, button {
-    text-decoration: none;
-    color: rgba(255, 255, 0, 1);
-    cursor: pointer;
+.size-td {
+    width: 6rem;
+    font-size: 0.85rem;
 }
 
-td > button {
-    background-color: rgba(0, 0, 0, 0);
-    border: none;
+.del-td {
+    color: rgba(200,0,0,1);
+}
+
+.del-td:hover {
+    color: rgba(255,0,0,1);
+}
+
+.ops-td {
+    width: 3.5rem;
 }
 
 form {
@@ -35,13 +112,14 @@ form {
 
 form > button {
     width: 60px;
+    font-weight: normal;
 }
 
 input[type=file] {
     color: rgba(255, 255, 255, 1);
     background-color: rgba(60, 60, 60, 1);
     border-radius: .25rem;
-    font-size: 1rem;
+    max-width: 60%;
 }
 
 input[type=file]::file-selector-button, form > button {
@@ -53,3 +131,8 @@ input[type=file]::file-selector-button, form > button {
     background-color: #2a80eb;
     cursor: pointer;
 }
+
+
+
+
+
