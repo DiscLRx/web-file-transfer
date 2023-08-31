@@ -21,3 +21,6 @@ files-root: ./files
 
 # 访问密钥
 access-key: example-key
+
+# 日志文件
+log-file: ./wft.log

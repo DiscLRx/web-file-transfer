@@ -8,6 +8,7 @@ const jsonBody = require("body/json");
 const {trim, getDateStr, getFileContent, mergeObjects} = require("./utils");
 const {DirTree} = require("./dir-tree");
 const path = require("path");
+const {Log} = require('./log')
 
 const config = {
     server: {
@@ -26,7 +27,8 @@ const config = {
         }
     },
     'files-root': './files',
-    'access-key': 'example-key'
+    'access-key': 'example-key',
+    'log-file': ''
 }
 
 let userConfig = null
@@ -52,6 +54,7 @@ const HTTPS_SSH_KEY = config.server.https['ssl-key']
 
 const FILES_ROOT = config['files-root']
 const ACCESS_KEY = config['access-key'].toString()
+const LOG_FILE = config['log-file']
 
 const FILE_TMP_DIR = './tmp'
 
@@ -246,7 +249,7 @@ function uploadFile(req, res) {
 
         form.parse(req)
     } catch (ex) {
-        console.log(ex)
+        Log.log(ex)
     }
 }
 
@@ -264,7 +267,7 @@ function downloadFile (req, res) {
             rs.pipe(res)
         }
     } catch (ex) {
-        console.log(ex)
+        Log.log(ex)
     }
 }
 
@@ -278,7 +281,7 @@ function deleteFile (req, res) {
         })
         res.end()
     } catch (ex) {
-        console.log(ex)
+        Log.log(ex)
     }
 }
 
@@ -293,8 +296,10 @@ function createDirectory(req, res) {
 }
 
 function logRequest(req) {
-    console.log(`[${getDateStr()}]  ${req.socket.remoteAddress}:${req.socket.remotePort} => ${req.socket.localAddress}:${req.socket.localPort}  ${req.method} ${req.url}`)
+    Log.log(`${req.socket.remoteAddress}:${req.socket.remotePort} => ${req.socket.localAddress}:${req.socket.localPort}  ${req.method} ${req.url}`)
 }
+
+Log.setLogFile(LOG_FILE)
 
 if (HTTPS_ENABLE) {
     https
@@ -306,7 +311,7 @@ if (HTTPS_ENABLE) {
             route(req, res)
         })
         .listen(HTTPS_PORT, HTTPS_HOSTNAME, () => {
-            console.log(`[${getDateStr()}]  Listening ${HTTPS_HOSTNAME}:${HTTPS_PORT}`)
+            Log.log(`Listening ${HTTPS_HOSTNAME}:${HTTPS_PORT}`)
         })
 }
 
@@ -321,7 +326,7 @@ if (FORCE_HTTPS && HTTPS_ENABLE) {
             res.end()
         })
         .listen(HTTP_PORT, HTTP_HOSTNAME, () => {
-            console.log(`[${getDateStr()}]  Listening ${HTTP_HOSTNAME}:${HTTP_PORT} \nForce Https`)
+            Log.log(`Listening ${HTTP_HOSTNAME}:${HTTP_PORT} \nForce Https`)
         })
 } else if (HTTP_ENABLE) {
     http
@@ -330,7 +335,7 @@ if (FORCE_HTTPS && HTTPS_ENABLE) {
             route(req, res)
         })
         .listen(HTTP_PORT, HTTP_HOSTNAME, () => {
-            console.log(`[${getDateStr()}]  Listening ${HTTP_HOSTNAME}:${HTTP_PORT}`)
+            Log.log(`Listening ${HTTP_HOSTNAME}:${HTTP_PORT}`)
         })
 }
 

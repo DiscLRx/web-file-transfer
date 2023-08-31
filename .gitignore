@@ -4,3 +4,4 @@ daemon
 files
 tmp
 cert
+*.log
