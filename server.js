@@ -212,29 +212,39 @@ function getFileList (req, res) {
     res.end(filesJson)
 }
 
-function uploadFile (req, res) {
+function uploadFile(req, res) {
     try {
         let form = new multiparty.Form({
             uploadDir: FILE_TMP_DIR
         })
-        form.parse(req, (err, fields, files) => {
-            const baseDir = fields.baseDir[0]
-            if (files !== undefined) {
-                files.file.forEach(file => {
-                    let tmpPath = file.path
-                    let filename = file.originalFilename
-                    if (trim(filename) === '') {
-                        fs.unlinkSync(tmpPath)
-                    } else {
-                        fs.renameSync(tmpPath, path.join(FILES_ROOT, baseDir, filename))
-                    }
-                })
+        let baseDir
+        form.on('field', (name, value) => {
+            if (name === 'baseDir') {
+                baseDir = value
             }
+        })
+
+        form.on('file', (name, file) => {
+            let tmpPath = file.path
+            let filename = file.originalFilename
+            if (trim(filename) === '') {
+                fs.unlinkSync(tmpPath)
+            } else {
+                fs.renameSync(tmpPath, path.join(FILES_ROOT, baseDir, filename))
+            }
+        })
+
+        const sendRes = () => {
             res.writeHead(302, {
                 'Location': '/'
             })
             res.end();
-        })
+        }
+
+        form.on('close', sendRes)
+        form.on('error', sendRes)
+
+        form.parse(req)
     } catch (ex) {
         console.log(ex)
     }
